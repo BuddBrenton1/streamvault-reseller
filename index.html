@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>StreamVault — Reseller Portal</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0c0e12;--sidebar:#111318;--card:#161920;--border:#1f2530;
+  --text:#e8eaf0;--sub:#5a6478;--muted:#2a3040;--accent:#1a6ef5;--gold:#f0a500;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+input,select,textarea{background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:14px;outline:none;width:100%;font-family:inherit}
+input:focus,select:focus{border-color:var(--accent)}
+button{cursor:pointer;font-family:inherit;border:none;border-radius:8px;font-weight:700;transition:opacity .15s}
+button:hover{opacity:.85}
+.btn-primary{background:linear-gradient(135deg,#1a6ef5,#7c3aed);color:#fff;padding:10px 22px;font-size:14px}
+.btn-secondary{background:var(--muted);color:var(--sub);padding:10px 22px;font-size:14px}
+.btn-danger{background:rgba(239,68,68,.15);color:#f87171;padding:8px 16px;font-size:13px}
+.btn-success{background:rgba(34,197,94,.15);color:#4ade80;padding:8px 16px;font-size:13px}
+.btn-sm{padding:6px 14px;font-size:12px}
+label{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px}
+.badge{display:inline-block;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700}
+.badge-green{background:rgba(34,197,94,.15);color:#4ade80}
+.badge-red{background:rgba(239,68,68,.15);color:#f87171}
+.badge-blue{background:rgba(59,130,246,.15);color:#60a5fa}
+.badge-yellow{background:rgba(240,165,0,.15);color:var(--gold)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a2035;border:1px solid var(--accent);border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;color:#60a5fa;z-index:9999;box-shadow:0 4px 20px rgba(59,130,246,.3);animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:#161920;border:1px solid var(--border);border-radius:18px;padding:28px;width:460px;max-width:94vw;box-shadow:0 30px 100px rgba(0,0,0,.9)}
+
+/* Auth screens */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.auth-box{width:400px;max-width:100%}
+.logo{text-align:center;margin-bottom:32px}
+.logo-icon{font-size:48px;margin-bottom:8px}
+.logo-name{font-size:26px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#3b82f6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:var(--sub);margin-top:4px;letter-spacing:2px}
+.tab-btns{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tab-btn{flex:1;padding:10px;font-size:13px;font-weight:700;background:transparent;color:var(--sub);border:none;cursor:pointer}
+.tab-btn.active{background:var(--accent);color:#fff}
+
+/* App shell */
+#app-screen{display:none;height:100vh;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:0 24px;height:56px;background:var(--sidebar);border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar-logo{font-size:17px;font-weight:900;background:linear-gradient(135deg,#3b82f6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.reseller-name{font-size:13px;color:var(--sub)}
+.shell{display:flex;flex:1;overflow:hidden}
+.sidenav{width:200px;background:var(--sidebar);border-right:1px solid var(--border);padding:12px 10px;flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;cursor:pointer;margin-bottom:2px;font-size:14px;font-weight:500;color:var(--sub);border-left:3px solid transparent;transition:all .15s}
+.nav-item:hover{background:var(--muted);color:var(--text)}
+.nav-item.active{background:rgba(26,110,245,.2);color:#fff;font-weight:700;border-left:3px solid var(--accent)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.content{flex:1;overflow-y:auto;padding:28px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:22px;font-weight:900;letter-spacing:-.3px;margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.stat-val{font-size:32px;font-weight:900;margin-bottom:4px}
+.stat-lbl{font-size:12px;color:var(--sub);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.code-box{background:var(--muted);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin:16px 0}
+.code-val{font-size:28px;font-weight:900;letter-spacing:3px;color:#60a5fa;font-family:monospace}
+.field{margin-bottom:16px}
+.row{display:flex;gap:12px;align-items:flex-end}
+.error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-bottom:16px}
+
+/* Admin extra */
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:13px}
+th{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+.actions{display:flex;gap:8px}
+
+@media(max-width:600px){
+  .grid-2{grid-template-columns:1fr}
+  .sidenav{display:none}
+  .content{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ────────────────────────────────────────────────────────────────── -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-name">StreamVault</div>
+      <div class="logo-sub">RESELLER PORTAL</div>
+    </div>
+
+    <div id="auth-tabs" class="tab-btns">
+      <button class="tab-btn active" onclick="showTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="showTab('register')">Register</button>
+    </div>
+
+    <div class="card">
+      <!-- Login -->
+      <div id="tab-login">
+        <div class="field"><label>Email</label><input id="l-email" type="email" placeholder="you@example.com"/></div>
+        <div class="field"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••"/></div>
+        <div id="l-err" class="error-box" style="display:none"></div>
+        <button class="btn-primary" style="width:100%;padding:12px;font-size:15px" onclick="doLogin()">Sign In</button>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--sub)">
+          Admin? <a href="admin.html">Admin Panel →</a>
+        </p>
+      </div>
+
+      <!-- Register -->
+      <div id="tab-register" style="display:none">
+        <div class="field"><label>Your Name / Company</label><input id="r-name" type="text" placeholder="Acme IPTV"/></div>
+        <div class="field"><label>Email</label><input id="r-email" type="email" placeholder="you@example.com"/></div>
+        <div class="field"><label>Password</label><input id="r-pass" type="password" placeholder="Min 8 characters"/></div>
+        <div id="r-err" class="error-box" style="display:none"></div>
+        <button class="btn-primary" style="width:100%;padding:12px;font-size:15px" onclick="doRegister()">Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP SHELL ───────────────────────────────────────────────────────────── -->
+<div id="app-screen" style="display:none;height:100vh;flex-direction:column">
+  <div class="topbar">
+    <div class="topbar-logo">⚡ StreamVault</div>
+    <div class="reseller-name" id="tb-name"></div>
+    <div style="flex:1"></div>
+    <button class="btn-secondary btn-sm" onclick="doLogout()">Sign Out</button>
+  </div>
+  <div class="shell">
+    <div class="sidenav">
+      <div class="nav-item active" data-page="dashboard" onclick="nav(this)"><span class="nav-icon">📊</span>Dashboard</div>
+      <div class="nav-item" data-page="dns" onclick="nav(this)"><span class="nav-icon">🌐</span>DNS / Server</div>
+      <div class="nav-item" data-page="code" onclick="nav(this)"><span class="nav-icon">🔑</span>My Code</div>
+      <div class="nav-item" data-page="profile" onclick="nav(this)"><span class="nav-icon">👤</span>Profile</div>
+      <div class="nav-item" data-page="help" onclick="nav(this)"><span class="nav-icon">❓</span>Help</div>
+    </div>
+    <div class="content">
+
+      <!-- Dashboard -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">Dashboard</div>
+        <div class="grid-2">
+          <div class="stat-card">
+            <div class="stat-val" id="st-lookups">—</div>
+            <div class="stat-lbl">Total App Connections</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="st-plan" style="font-size:20px;padding-top:6px">—</div>
+            <div class="stat-lbl">Current Plan</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:800;margin-bottom:16px;color:var(--sub);letter-spacing:1px;text-transform:uppercase">Quick Status</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:14px;color:var(--sub)">Account Status</span>
+              <span class="badge badge-green" id="st-status">Active</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:14px;color:var(--sub)">DNS Configured</span>
+              <span id="st-dns-ok" class="badge">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:14px;color:var(--sub)">Your Provider Code</span>
+              <span style="font-size:14px;font-weight:900;color:#60a5fa;letter-spacing:2px;font-family:monospace" id="st-code">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DNS -->
+      <div class="page" id="page-dns">
+        <div class="page-title">DNS / Server URL</div>
+        <div class="card" style="margin-bottom:16px">
+          <p style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:20px">
+            This is the IPTV server URL your clients' app will connect to. 
+            <strong style="color:var(--text)">Your clients never see this URL</strong> — they only enter their username, password and your provider code.<br><br>
+            When you update this, <strong style="color:var(--text)">all your clients get the new server automatically</strong> on their next app launch. No action needed from them.
+          </p>
+          <div class="field">
+            <label>Server URL (DNS)</label>
+            <input id="dns-input" type="url" placeholder="http://yourserver.com:8080"/>
+          </div>
+          <div id="dns-current" style="font-size:12px;color:var(--sub);margin-bottom:16px"></div>
+          <div id="dns-err" class="error-box" style="display:none"></div>
+          <button class="btn-primary" onclick="updateDNS()">💾 Save DNS</button>
+        </div>
+        <div class="card" style="background:rgba(26,110,245,.05);border-color:rgba(59,130,246,.2)">
+          <div style="font-size:13px;font-weight:800;color:#60a5fa;margin-bottom:10px">ℹ How to find your server URL</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.7">Your IPTV provider gives you an Xtream Codes URL that looks like:<br>
+          <code style="background:var(--muted);padding:3px 8px;border-radius:4px;color:var(--text)">http://provider.com:8080</code><br><br>
+          Use exactly that URL here. Do not include your username/password in this field.</p>
+        </div>
+      </div>
+
+      <!-- Code -->
+      <div class="page" id="page-code">
+        <div class="page-title">Your Provider Code</div>
+        <div class="card" style="margin-bottom:16px">
+          <p style="font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:16px">
+            This is the code your clients enter in the StreamVault app instead of the server URL.
+            Share this with all your clients — it never changes.
+          </p>
+          <div class="code-box">
+            <div>
+              <div style="font-size:11px;color:var(--sub);font-weight:700;letter-spacing:1px;margin-bottom:6px">PROVIDER CODE</div>
+              <div class="code-val" id="code-display">—</div>
+            </div>
+            <button class="btn-primary btn-sm" style="margin-left:auto" onclick="copyCode()">📋 Copy</button>
+          </div>
+          <p style="font-size:13px;color:var(--sub)">Tell your clients to enter this code in the app along with their username and password.</p>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:800;margin-bottom:16px">What your clients see in the app:</div>
+          <div style="background:var(--bg);border-radius:12px;padding:20px;border:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--sub);margin-bottom:16px;text-align:center">StreamVault Login</div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;color:var(--sub);margin-bottom:4px">PROVIDER CODE</div>
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:#60a5fa;font-family:monospace" id="code-preview">SV-XXXXXX</div>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;color:var(--sub);margin-bottom:4px">USERNAME</div>
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--sub)">their_username</div>
+            </div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:10px;color:var(--sub);margin-bottom:4px">PASSWORD</div>
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--sub)">••••••••</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#1a6ef5,#7c3aed);border-radius:8px;padding:11px;text-align:center;font-weight:700;color:#fff;font-size:14px">Connect & Watch</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="page" id="page-profile">
+        <div class="page-title">Profile</div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:13px;font-weight:800;margin-bottom:16px;color:var(--sub);text-transform:uppercase;letter-spacing:1px">Update Name</div>
+          <div class="field"><label>Display Name</label><input id="p-name" type="text"/></div>
+          <button class="btn-primary btn-sm" onclick="updateName()">Save Name</button>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:800;margin-bottom:16px;color:var(--sub);text-transform:uppercase;letter-spacing:1px">Change Password</div>
+          <div class="field"><label>Current Password</label><input id="p-cur" type="password"/></div>
+          <div class="field"><label>New Password</label><input id="p-new" type="password"/></div>
+          <div id="p-err" class="error-box" style="display:none"></div>
+          <button class="btn-primary btn-sm" onclick="updatePassword()">Change Password</button>
+        </div>
+      </div>
+
+      <!-- Help -->
+      <div class="page" id="page-help">
+        <div class="page-title">Help & Setup Guide</div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:12px">Getting started</div>
+          <ol style="font-size:14px;color:var(--sub);line-height:2;padding-left:20px">
+            <li>Go to <strong style="color:var(--text)">DNS / Server</strong> and enter your IPTV server URL</li>
+            <li>Go to <strong style="color:var(--text)">My Code</strong> and copy your provider code</li>
+            <li>Share the code with your clients along with their username and password</li>
+            <li>Clients download StreamVault, enter the code + their credentials and connect</li>
+            <li>To change your server URL at any time — just update DNS. All clients update automatically.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <div style="font-size:15px;font-weight:800;margin-bottom:12px">What to tell your clients</div>
+          <div style="background:var(--muted);border-radius:10px;padding:16px;font-size:13px;color:var(--sub);line-height:1.8;font-style:italic">
+            "Download <strong style="color:var(--text)">StreamVault</strong> from [your download link].<br>
+            Open the app and enter:<br>
+            • Provider Code: <strong style="color:#60a5fa" id="help-code">your code here</strong><br>
+            • Username: [their username]<br>
+            • Password: [their password]<br>
+            Then tap Connect."
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+// Change this to your deployed backend URL
+const API = localStorage.getItem("sv_api") || "http://localhost:4000";
+
+let TOKEN = localStorage.getItem("sv_token");
+let ME    = null;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (TOKEN) opts.headers["Authorization"] = "Bearer " + TOKEN;
+  if (body)  opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = "block";
+}
+function hideErr(id) { document.getElementById(id).style.display = "none"; }
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.getElementById("tab-login").style.display    = tab==="login"    ? "" : "none";
+  document.getElementById("tab-register").style.display = tab==="register" ? "" : "none";
+  document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active", (i===0&&tab==="login")||(i===1&&tab==="register")));
+}
+
+async function doLogin() {
+  hideErr("l-err");
+  const email = document.getElementById("l-email").value.trim();
+  const pass  = document.getElementById("l-pass").value;
+  if (!email || !pass) { showErr("l-err", "Enter email and password"); return; }
+  try {
+    const data = await api("POST", "/reseller/login", { email, password: pass });
+    TOKEN = data.token;
+    ME    = data.reseller;
+    localStorage.setItem("sv_token", TOKEN);
+    showApp();
+  } catch(e) { showErr("l-err", e.message); }
+}
+
+async function doRegister() {
+  hideErr("r-err");
+  const name  = document.getElementById("r-name").value.trim();
+  const email = document.getElementById("r-email").value.trim();
+  const pass  = document.getElementById("r-pass").value;
+  if (!name||!email||!pass) { showErr("r-err","Fill in all fields"); return; }
+  try {
+    await api("POST", "/reseller/register", { name, email, password: pass });
+    toast("✓ Account created — sign in now");
+    showTab("login");
+    document.getElementById("l-email").value = email;
+  } catch(e) { showErr("r-err", e.message); }
+}
+
+function doLogout() {
+  TOKEN = null; ME = null;
+  localStorage.removeItem("sv_token");
+  document.getElementById("auth-screen").style.display = "flex";
+  document.getElementById("app-screen").style.display  = "none";
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+async function showApp() {
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("app-screen").style.display  = "flex";
+  await loadMe();
+}
+
+async function loadMe() {
+  try {
+    ME = await api("GET", "/reseller/me");
+    // Topbar
+    document.getElementById("tb-name").textContent = ME.name;
+    // Dashboard
+    document.getElementById("st-lookups").textContent = ME.total_lookups || 0;
+    document.getElementById("st-plan").textContent    = ME.plan.toUpperCase();
+    document.getElementById("st-status").textContent  = ME.active ? "Active" : "Suspended";
+    document.getElementById("st-status").className    = "badge " + (ME.active?"badge-green":"badge-red");
+    document.getElementById("st-dns-ok").textContent  = ME.dns ? "✓ Set" : "⚠ Not set";
+    document.getElementById("st-dns-ok").className    = "badge " + (ME.dns?"badge-green":"badge-red");
+    document.getElementById("st-code").textContent    = ME.code;
+    // DNS
+    document.getElementById("dns-input").value = ME.dns || "";
+    document.getElementById("dns-current").textContent = ME.dns ? "Current: " + ME.dns : "Not set yet";
+    // Code
+    document.getElementById("code-display").textContent = ME.code;
+    document.getElementById("code-preview").textContent = ME.code;
+    document.getElementById("help-code").textContent    = ME.code;
+    // Profile
+    document.getElementById("p-name").value = ME.name;
+  } catch(e) {
+    if (e.message === "Invalid token") doLogout();
+  }
+}
+
+function nav(el) {
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("page-" + el.dataset.page).classList.add("active");
+}
+
+async function updateDNS() {
+  hideErr("dns-err");
+  const dns = document.getElementById("dns-input").value.trim();
+  if (!dns) { showErr("dns-err","Enter your server URL"); return; }
+  try {
+    const data = await api("PUT", "/reseller/dns", { dns });
+    ME.dns = data.dns;
+    document.getElementById("dns-current").textContent = "Current: " + data.dns;
+    document.getElementById("st-dns-ok").textContent  = "✓ Set";
+    document.getElementById("st-dns-ok").className    = "badge badge-green";
+    toast("✓ DNS updated — all clients will connect to the new server");
+  } catch(e) { showErr("dns-err", e.message); }
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(ME.code).then(() => toast("✓ Code copied: " + ME.code));
+}
+
+async function updateName() {
+  const name = document.getElementById("p-name").value.trim();
+  if (!name) return;
+  try {
+    await api("PUT", "/reseller/profile", { name });
+    ME.name = name;
+    document.getElementById("tb-name").textContent = name;
+    toast("✓ Name updated");
+  } catch(e) { toast("⚠ " + e.message); }
+}
+
+async function updatePassword() {
+  hideErr("p-err");
+  const cur = document.getElementById("p-cur").value;
+  const nw  = document.getElementById("p-new").value;
+  if (!cur||!nw) { showErr("p-err","Fill both fields"); return; }
+  try {
+    await api("PUT", "/reseller/profile", { password: cur, new_password: nw });
+    document.getElementById("p-cur").value = "";
+    document.getElementById("p-new").value = "";
+    toast("✓ Password changed");
+  } catch(e) { showErr("p-err", e.message); }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+(async () => {
+  if (TOKEN) {
+    try {
+      await showApp();
+    } catch {
+      doLogout();
+    }
+  }
+})();
+</script>
+</body>
+</html>
